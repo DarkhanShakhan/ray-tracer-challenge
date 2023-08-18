@@ -1,9 +1,12 @@
-use features::{canvas::Canvas, tuple::Tuple};
+use features::{canvas::Canvas, tuple::Tuple, matrice::Matrice};
 use practice::{Environment, Projectile};
 
 mod features;
 mod practice;
 fn main() {
+   
+
+
     let mut proj = Projectile::new(
         Tuple::point(0.0, 1.0, 0.0),
         Tuple::vector(1.0, 1.8, 0.0).normalize() * 12.6,
