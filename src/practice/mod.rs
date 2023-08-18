@@ -1,4 +1,4 @@
-use crate::features::vector::Tuple;
+use crate::features::tuple::Tuple;
 
 pub struct Projectile {
     pub position: Tuple,

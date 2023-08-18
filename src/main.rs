@@ -1,4 +1,4 @@
-use features::vector::Tuple;
+use features::tuple::Tuple;
 use practice::{Environment, Projectile};
 
 mod features;
