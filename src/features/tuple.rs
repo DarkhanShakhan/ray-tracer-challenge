@@ -30,40 +30,50 @@ impl Tuple {
         }
     }
 
-    pub fn color(x:f32, y:f32, z:f32) -> Self {
-        Tuple { x, y, z, w: TupleType::Color}
+    pub fn color(x: f32, y: f32, z: f32) -> Self {
+        Tuple {
+            x,
+            y,
+            z,
+            w: TupleType::Color,
+        }
     }
     pub fn as_str(&self) -> String {
         format!("{} {} {}\n", self.x as i32, self.y as i32, self.z as i32)
     }
     pub fn clamp(&self) -> Self {
-        let mut x = self.x *255.0;
-        let mut y = self.y* 255.0;
-        let mut z = self.z*255.0;
+        let mut x = self.x * 255.0;
+        let mut y = self.y * 255.0;
+        let mut z = self.z * 255.0;
         //TODO:refactor
         if x > 255.0 {
-            x= 255.0;
+            x = 255.0;
         }
-        if x< 0.0 {
+        if x < 0.0 {
             x = 0.0;
         }
         if y > 255.0 {
-            y= 255.0;
+            y = 255.0;
         }
-        if y< 0.0 {
+        if y < 0.0 {
             y = 0.0;
         }
         if z > 255.0 {
-            z= 255.0;
+            z = 255.0;
         }
-        if z< 0.0 {
+        if z < 0.0 {
             z = 0.0;
         }
         Self::color(x, y, z)
     }
 
-    pub fn default_color() ->Self {
-        Tuple{x:0.0,y:0.0,z:0.0,w:TupleType::Color}
+    pub fn default_color() -> Self {
+        Tuple {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: TupleType::Color,
+        }
     }
     pub fn magnitude(&self) -> f32 {
         (self.x * self.x + self.y * self.y + self.x * self.x).sqrt()
@@ -101,10 +111,10 @@ mod tuple_tests {
     }
     #[test]
     fn test_mul_colors() {
-        let color_tuple= Tuple::color(1.0,  0.2,0.4);
-        let color_other_tuple= Tuple::color(0.9,  1.0,0.1);
-        let res = color_other_tuple*color_tuple;
-        assert!(res == Tuple::color(0.9,0.2,0.04))
+        let color_tuple = Tuple::color(1.0, 0.2, 0.4);
+        let color_other_tuple = Tuple::color(0.9, 1.0, 0.1);
+        let res = color_other_tuple * color_tuple;
+        assert!(res == Tuple::color(0.9, 0.2, 0.04))
     }
 }
 
@@ -162,7 +172,7 @@ impl Mul<f32> for Tuple {
 impl Mul for Tuple {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self::Output {
-        Self::color(self.x *rhs.x, self.y*rhs.y, self.z*rhs.z)
+        Self::color(self.x * rhs.x, self.y * rhs.y, self.z * rhs.z)
     }
 }
 
