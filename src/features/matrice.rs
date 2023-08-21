@@ -26,6 +26,54 @@ impl Matrice {
         out
     }
 
+    pub fn inverse(&self) -> Option<Self> {
+        let det = self.determinant();
+        if det == 0.0 {
+            return None;
+        }
+        let mut out = Self::new(self.size);
+        let mut c;
+        for row in 0..self.size {
+            for col in 0..self.size {
+                c = self.cofactor(row, col);
+                out.write_element(col, row, c / det);
+            }
+        }
+        Some(out)
+    }
+    pub fn determinant(&self) -> f32 {
+        if self.size == 2 {
+            return self.matrice[0][0] * self.matrice[1][1]
+                - self.matrice[0][1] * self.matrice[1][0];
+        }
+        let mut det = 0.0;
+        for c in 0..self.size {
+            det += self.matrice[0][c] * self.cofactor(0, c);
+        }
+        det
+    }
+
+    pub fn submatrix(&self, r: usize, c: usize) -> Self {
+        let mut matrice = vec![];
+        let mut row_to_add = vec![];
+        for row in 0..self.size {
+            if row == r {
+                continue;
+            }
+            for column in 0..self.size {
+                if column == c {
+                    continue;
+                }
+                row_to_add.push(self.element_at(row, column));
+            }
+            matrice.push(row_to_add);
+            row_to_add = vec![];
+        }
+        Self {
+            size: self.size - 1,
+            matrice,
+        }
+    }
     pub fn size(&self) -> usize {
         self.size
     }
@@ -55,6 +103,17 @@ impl Matrice {
         }
         out
     }
+
+    pub fn minor(&self, row: usize, column: usize) -> f32 {
+        self.submatrix(row, column).determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, column: usize) -> f32 {
+        if (row + column) % 2 != 0 {
+            return -self.minor(row, column);
+        }
+        self.minor(row, column)
+    }
 }
 
 impl Mul for Matrice {
@@ -77,6 +136,8 @@ impl Mul for Matrice {
 
 #[cfg(test)]
 mod matrice_tests {
+    use std::vec;
+
     use super::Matrice;
 
     #[test]
@@ -118,5 +179,155 @@ mod matrice_tests {
         let matrice = Matrice::random(4);
         let transposed_matrice = matrice.transpose();
         assert_eq!(matrice, transposed_matrice.transpose());
+    }
+
+    #[test]
+    fn test_determinant() {
+        let mut matrice = Matrice::random(2);
+        matrice.write_element(0, 0, 1.0);
+        matrice.write_element(0, 1, 5.0);
+        matrice.write_element(1, 0, -3.0);
+        matrice.write_element(1, 1, 2.0);
+        assert_eq!(matrice.determinant(), 17.0);
+    }
+
+    #[test]
+    fn test_submatrice() {
+        let matrice = Matrice::random(4);
+        let sub_matrice = matrice.submatrix(2, 2);
+        println!("{:?}", sub_matrice);
+    }
+
+    #[test]
+    fn test_minor() {
+        let mut matrice = Matrice::new(3);
+        matrice.write_element(0, 0, 3.0);
+        matrice.write_element(0, 1, 5.0);
+        matrice.write_element(0, 2, 0.0);
+        matrice.write_element(1, 0, 2.0);
+        matrice.write_element(1, 1, -1.0);
+        matrice.write_element(1, 2, -7.0);
+        matrice.write_element(2, 0, 6.0);
+        matrice.write_element(2, 1, -1.0);
+        matrice.write_element(2, 2, 5.0);
+        assert_eq!(matrice.minor(1, 0), 25.0);
+    }
+
+    #[test]
+    fn test_cofactor() {
+        let mut matrice = Matrice::new(3);
+        matrice.write_element(0, 0, 3.0);
+        matrice.write_element(0, 1, 5.0);
+        matrice.write_element(0, 2, 0.0);
+        matrice.write_element(1, 0, 2.0);
+        matrice.write_element(1, 1, -1.0);
+        matrice.write_element(1, 2, -7.0);
+        matrice.write_element(2, 0, 6.0);
+        matrice.write_element(2, 1, -1.0);
+        matrice.write_element(2, 2, 5.0);
+        assert_eq!(matrice.cofactor(1, 0), -25.0);
+        assert_eq!(matrice.cofactor(0, 0), -12.0);
+    }
+
+    #[test]
+    fn test_3d_determinant() {
+        let matrice = Matrice {
+            size: 3,
+            matrice: vec![
+                vec![1.0, 2.0, 6.0],
+                vec![-5.0, 8.0, -4.0],
+                vec![2.0, 6.0, 4.0],
+            ],
+        };
+        assert_eq!(matrice.determinant(), -196.0);
+    }
+
+    #[test]
+    fn test_4d_determinant() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![-2.0, -8.0, 3.0, 5.0],
+                vec![-3.0, 1.0, 7.0, 3.0],
+                vec![1.0, 2.0, -9.0, 6.0],
+                vec![-6.0, 7.0, 7.0, -9.0],
+            ],
+        };
+        assert_eq!(matrice.determinant(), -4071.0);
+    }
+
+    #[test]
+    fn test_is_invertible() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![6.0, 4.0, 4.0, 4.0],
+                vec![5.0, 5.0, 7.0, 6.0],
+                vec![4.0, -9.0, 3.0, -7.0],
+                vec![9.0, 1.0, 7.0, -6.0],
+            ],
+        };
+        let det = matrice.determinant();
+        assert!(det != 0.0);
+    }
+    #[test]
+    fn test_is_not_invertible() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![-4.0, 2.0, -2.0, -3.0],
+                vec![9.0, 6.0, 2.0, 6.0],
+                vec![0.0, -5.0, 1.0, -5.0],
+                vec![0.0, 0.0, 0.0, 0.0],
+            ],
+        };
+        let det = matrice.determinant();
+        assert!(det == 0.0);
+    }
+
+    #[test]
+    fn test_inverse_matrix() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![8.0, -5.0, 9.0, 2.0],
+                vec![7.0, 5.0, 6.0, 1.0],
+                vec![-6.0, 0.0, 9.0, 6.0],
+                vec![-3.0, 0.0, -9.0, -4.0],
+            ],
+        };
+        println!("{:?}", matrice.inverse());
+    }
+
+    #[test]
+    fn test_multiplying_inverse() {
+        let matrice_a = Matrice::random(4);
+        let matrice_b = Matrice::random(4);
+        let matrice_c = matrice_a.clone() * matrice_b.clone();
+        println!("{:?}", matrice_c * matrice_b.inverse().unwrap());
+        println!("{:?}", matrice_a);
+    }
+
+    #[test]
+    fn test_inverse_identity_matrice() {
+        let id_matrice = Matrice::identity_matrix(4);
+        let id_matrice_inverse = id_matrice.inverse().unwrap();
+        println!("{:?}", id_matrice);
+        println!("{:?}", id_matrice_inverse);
+    }
+
+    #[test]
+    fn test_multiplying_inverse_to_matrice() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![8.0, -5.0, 9.0, 2.0],
+                vec![7.0, 5.0, 6.0, 1.0],
+                vec![-6.0, 0.0, 9.0, 6.0],
+                vec![-3.0, 0.0, -9.0, -4.0],
+            ],
+        };
+        let inverse = matrice.inverse().unwrap();
+        println!("{:?}", matrice * inverse);
     }
 }
