@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use std::ops::Mul;
 
-use super::tuple::Tuple;
+use super::tuple::{Tuple, TupleType};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Matrice {
@@ -25,14 +25,6 @@ impl Matrice {
                 out.write_element(ix, jx, rng.gen())
             }
         }
-        out
-    }
-
-    pub fn translation(x: f32, y: f32, z: f32) -> Self {
-        let mut out = Self::identity_matrix(4);
-        out.write_element(0, 3, x);
-        out.write_element(1, 3, y);
-        out.write_element(2, 3, z);
         out
     }
 
@@ -148,7 +140,21 @@ impl Mul<Tuple> for Matrice {
     type Output = Tuple;
 
     fn mul(self, rhs: Tuple) -> Self::Output {
-        todo!()
+        let mut tuple = vec![rhs.x, rhs.y, rhs.z, 0.0];
+        if rhs.w == TupleType::Point {
+            tuple[3] = 1.0;
+        }
+        let mut out = vec![0.0; 4];
+        for (ix, row) in self.matrice.iter().enumerate() {
+            for (jx, col) in row.iter().enumerate() {
+                out[ix] += *col * tuple[jx];
+            }
+        }
+        let mut w = TupleType::Vector;
+        if out[3] == 0.0 {
+            w = TupleType::Vector;
+        }
+        Tuple::new(out[0], out[1], out[2], w)
     }
 }
 
@@ -352,24 +358,18 @@ mod matrice_tests {
     }
 
     #[test]
-    fn test_multiplying_translation_matrix_to_point() {
-        let transform = Matrice::translation(5.0, -3.0, 2.0);
-        let p = Tuple::point(-3.0, 4.0, 5.0);
-        assert_eq!(transform * p, Tuple::point(2.0, 1.0, 7.0))
-    }
-
-    #[test]
-    fn test_multiplying_inverse_translation_matrix_to_point() {
-        let transform = Matrice::translation(5.0, -3.0, 2.0);
-        let inv = transform.inverse().unwrap();
-        let p = Tuple::point(-3.0, 4.0, 5.0);
-        assert_eq!(inv * p, Tuple::point(-8.0, 7.0, 3.0));
-    }
-
-    #[test]
-    fn test_multiplying_translation_matric_to_vector() {
-        let transform = Matrice::translation(5.0, -3.0, 2.0);
-        let v = Tuple::vector(-3.0, 4.0, 5.0);
-        assert_eq!(transform * v, v);
+    fn test_multiplying_matrix_to_tuple() {
+        let matrice = Matrice {
+            size: 4,
+            matrice: vec![
+                vec![1.0, 2.0, 3.0, 4.0],
+                vec![2.0, 4.0, 4.0, 2.0],
+                vec![8.0, 6.0, 4.0, 1.0],
+                vec![0.0, 0.0, 0.0, 1.0],
+            ],
+        };
+        let tuple = Tuple::point(1.0, 2.0, 3.0);
+        let res = matrice * tuple;
+        assert_eq!(res, Tuple::point(18.0, 24.00, 33.0))
     }
 }

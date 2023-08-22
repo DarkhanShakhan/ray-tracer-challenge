@@ -5,7 +5,7 @@ pub struct Tuple {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    w: TupleType,
+    pub w: TupleType,
 }
 const EPSILON: f32 = 0.00001;
 
@@ -176,7 +176,7 @@ impl Mul for Tuple {
     }
 }
 
-#[derive(Default, Copy, Clone, Debug)]
+#[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub enum TupleType {
     Vector,
     #[default]

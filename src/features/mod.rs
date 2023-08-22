@@ -1,3 +1,4 @@
 pub mod canvas;
-pub mod tuple;
 pub mod matrice;
+pub mod transformations;
+pub mod tuple;
