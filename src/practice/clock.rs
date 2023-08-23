@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use crate::features::{canvas::Canvas, transformations::rotation_y, tuple::Tuple};
 
 pub fn draw_clock() {
-    let k = 12.0;
+    let k = 48.0;
     let mut canvas = Canvas::new(400, 400);
     let canvas_center = (canvas.width / 2, canvas.height / 2);
     let radius = (canvas.width * 3) / 8;

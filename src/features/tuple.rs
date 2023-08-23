@@ -120,7 +120,10 @@ mod tuple_tests {
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
-        (self.x - other.x) < EPSILON && (self.y - other.y) < EPSILON && (self.z - other.z) < EPSILON
+        (self.x - other.x).abs() < EPSILON
+            && (self.y - other.y).abs() < EPSILON
+            && (self.z - other.z).abs() < EPSILON
+            && self.w == other.w
     }
 }
 impl Eq for Tuple {}
