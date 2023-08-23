@@ -9,6 +9,8 @@ pub struct Matrice {
     matrice: Vec<Vec<f32>>,
 }
 
+impl Eq for Matrice {}
+
 impl Matrice {
     pub fn new(size: usize) -> Self {
         Matrice {
@@ -150,11 +152,7 @@ impl Mul<Tuple> for Matrice {
                 out[ix] += *col * tuple[jx];
             }
         }
-        let mut w = TupleType::Vector;
-        if out[3] == 0.0 {
-            w = TupleType::Vector;
-        }
-        Tuple::new(out[0], out[1], out[2], w)
+        Tuple::new(out[0], out[1], out[2], rhs.w)
     }
 }
 

@@ -1,5 +1,6 @@
 use crate::features::tuple::Tuple;
 pub mod clock;
+pub mod sphere;
 
 pub struct Projectile {
     pub position: Tuple,

@@ -1,4 +1,4 @@
-use super::tuple::Tuple;
+use super::{matrice::Matrice, tuple::Tuple};
 
 #[derive(Debug)]
 pub struct Ray {
@@ -14,6 +14,9 @@ impl Ray {
     }
 }
 
+pub fn transform(r: &Ray, m: Matrice) -> Ray {
+    Ray::new(m.clone() * r.origin, m.clone() * r.direction)
+}
 #[cfg(test)]
 mod ray_tests {
     use crate::features::tuple::Tuple;
@@ -40,5 +43,34 @@ mod ray_tests {
         assert_eq!(ray.position(1.0), Tuple::point(3.0, 3.0, 4.0));
         assert_eq!(ray.position(-1.0), Tuple::point(1.0, 3.0, 4.0));
         assert_eq!(ray.position(2.5), Tuple::point(4.5, 3.0, 4.0));
+    }
+}
+
+#[cfg(test)]
+mod ray_transformation_tests {
+    use crate::features::{
+        transformations::{scaling, translation},
+        tuple::Tuple,
+    };
+
+    use super::{transform, Ray};
+
+    #[test]
+    fn test_translating_ray() {
+        let r = Ray::new(Tuple::point(1.0, 2.0, 3.0), Tuple::vector(0.0, 1.0, 0.0));
+        let m = translation(3.0, 4.0, 5.0);
+        let r2 = transform(&r, m);
+        println!("{:?}", r2);
+        assert_eq!(r2.origin, Tuple::point(4.0, 6.0, 8.0));
+        assert_eq!(r2.direction, Tuple::vector(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn test_scaling_ray() {
+        let r = Ray::new(Tuple::point(1.0, 2.0, 3.0), Tuple::vector(0.0, 1.0, 0.0));
+        let m = scaling(2.0, 3.0, 4.0);
+        let r2 = transform(&r, m);
+        assert_eq!(r2.origin, Tuple::point(2.0, 6.0, 12.0));
+        assert_eq!(r2.direction, Tuple::vector(0.0, 3.0, 0.0));
     }
 }

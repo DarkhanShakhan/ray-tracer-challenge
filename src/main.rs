@@ -1,10 +1,10 @@
 use features::{canvas::Canvas, matrice::Matrice, tuple::Tuple};
-use practice::{clock::draw_clock, Environment, Projectile};
+use practice::{clock::draw_clock, sphere::draw_sphere, Environment, Projectile};
 
 mod features;
 mod practice;
 fn main() {
-    draw_clock();
+    draw_sphere();
     // let mut proj = Projectile::new(
     //     Tuple::point(0.0, 1.0, 0.0),
     //     Tuple::vector(1.0, 1.8, 0.0).normalize() * 12.6,

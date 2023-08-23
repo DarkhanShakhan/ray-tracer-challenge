@@ -24,13 +24,11 @@ impl Canvas {
     }
 
     pub fn to_ppm(&self) {
-        let bar = ProgressBar::new(self.height as u64);
         print!("P3\n{} {}\n255\n", self.width, self.height);
         for line in self.canvas.clone().into_iter() {
             for pixel in line {
                 print!("{}", pixel.clamp().as_str())
             }
-            bar.inc(1);
         }
     }
 }
