@@ -76,7 +76,7 @@ impl Tuple {
         }
     }
     pub fn magnitude(&self) -> f32 {
-        (self.x * self.x + self.y * self.y + self.x * self.x).sqrt()
+        (self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
     }
     pub fn normalize(&self) -> Self {
         let mag = self.magnitude();
@@ -193,7 +193,7 @@ impl Add for TupleType {
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Self::Point, Self::Vector) | (Self::Vector, Self::Point) => Self::Point,
-            (Self::Vector, Self::Vector) => Self::Vector,
+            (Self::Vector, Self::Vector) | (Self::Point, Self::Point) => Self::Vector,
             (Self::Color, Self::Color) => Self::Color,
             _ => Self::Undefined,
         }
