@@ -60,7 +60,6 @@ mod ray_transformation_tests {
         let r = Ray::new(Tuple::point(1.0, 2.0, 3.0), Tuple::vector(0.0, 1.0, 0.0));
         let m = translation(3.0, 4.0, 5.0);
         let r2 = transform(&r, m);
-        println!("{:?}", r2);
         assert_eq!(r2.origin, Tuple::point(4.0, 6.0, 8.0));
         assert_eq!(r2.direction, Tuple::vector(0.0, 1.0, 0.0));
     }

@@ -181,13 +181,13 @@ mod shearing_tests {
     fn test_shearing_transformation_x_to_y() {
         let transform = shearing(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
         let p = Tuple::point(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Tuple::vector(5.0, 3.0, 4.0));
+        assert_eq!(transform * p, Tuple::point(5.0, 3.0, 4.0));
     }
     #[test]
     fn test_shearing_transformation_y_to_z() {
         let transform = shearing(0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
         let p = Tuple::point(2.0, 3.0, 4.0);
-        assert_eq!(transform * p, Tuple::vector(2.0, 5.0, 4.0));
+        assert_eq!(transform * p, Tuple::point(2.0, 5.0, 4.0));
     }
 }
 
