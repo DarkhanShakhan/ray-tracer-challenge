@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use super::{
+    materials::Material,
     matrice::Matrice,
     rays::Ray,
     tuple::{Tuple, TupleType},
@@ -10,11 +11,13 @@ use super::{
 pub struct Sphere {
     pub id: Uuid,
     pub transform: Matrice,
+    pub material: Material,
 }
 
 impl Sphere {
     pub fn new() -> Self {
         Self {
+            material: Material::new(),
             id: Uuid::new_v4(),
             transform: Matrice::identity_matrix(4),
         }
@@ -126,5 +129,27 @@ mod normals_tests {
             -(2.0_f32.sqrt() / 2.0),
         ));
         assert_eq!(n, Tuple::vector(0.0, 0.97014, -0.24254));
+    }
+}
+
+#[cfg(test)]
+mod material_tests {
+    use crate::features::materials::Material;
+
+    use super::Sphere;
+
+    #[test]
+    fn test_default_material() {
+        let s = Sphere::new();
+        assert_eq!(s.material, Material::new());
+    }
+
+    #[test]
+    fn test_assigning_material() {
+        let mut s = Sphere::new();
+        let mut m = Material::new();
+        m.ambient = 1.0;
+        s.material = m.clone();
+        assert_eq!(s.material, m);
     }
 }
