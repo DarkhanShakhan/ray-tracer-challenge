@@ -179,7 +179,19 @@ impl Sub for Tuple {
 impl Neg for Tuple {
     type Output = Self;
     fn neg(self) -> Self::Output {
-        Tuple::new(-self.x, -self.y, -self.z, self.w)
+        let mut x = -self.x;
+        if self.x == 0.0 {
+            x = 0.0;
+        }
+        let mut y = -self.y;
+        if self.y == 0.0 {
+            y = 0.0;
+        }
+        let mut z = -self.z;
+        if self.z == 0.0 {
+            z = 0.0;
+        }
+        Tuple::new(x, y, z, self.w)
     }
 }
 
