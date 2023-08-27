@@ -7,3 +7,4 @@ pub mod rays;
 pub mod spheres;
 pub mod transformations;
 pub mod tuple;
+pub mod world;

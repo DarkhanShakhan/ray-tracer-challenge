@@ -14,7 +14,7 @@ use crate::features::{
 pub fn draw_sphere() {
     let origin = Tuple::point(0.0, 0.0, -5.0);
     let wall_size = 7.0;
-    let canvas_pixels = 300.0;
+    let canvas_pixels = 500.0;
     let wall_z = 10.0;
     let pixel_size = wall_size / canvas_pixels;
     let half = wall_size / 2.0;
@@ -42,6 +42,7 @@ pub fn draw_sphere() {
             }
 
             canvas.write_pixel(x, y, color);
+            color = Tuple::default_color();
         }
         bar.inc(1);
     }

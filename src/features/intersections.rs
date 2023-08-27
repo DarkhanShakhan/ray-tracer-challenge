@@ -194,3 +194,76 @@ mod hit_tests {
         assert!(i == i4);
     }
 }
+pub mod Computations {
+    use crate::features::{rays::Ray, spheres::Sphere, tuple::Tuple};
+
+    use super::Intersection;
+
+    pub struct Computation {
+        pub t: f32,
+        pub object: Sphere,
+        pub point: Tuple,
+        pub eyev: Tuple,
+        pub normalv: Tuple,
+        pub inside: bool,
+    }
+
+    impl Computation {
+        pub fn new(i: &Intersection, r: &Ray) -> Self {
+            let mut normalv = i.s.normal_at(r.position(i.t));
+            let mut inside = false;
+            if normalv.dot(&-(r.direction)) < 0.0 {
+                inside = true;
+                normalv = -normalv;
+            }
+            Computation {
+                t: i.t,
+                object: i.s.clone(),
+                point: r.position(i.t),
+                eyev: -(r.direction),
+                normalv,
+                inside,
+            }
+        }
+    }
+    #[cfg(test)]
+    mod computation_tests {
+        use crate::features::{
+            intersections::Intersection, rays::Ray, spheres::Sphere, tuple::Tuple,
+        };
+
+        use super::Computation;
+
+        #[test]
+        fn test_prepare_computation() {
+            let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+            let shape = Sphere::new();
+            let i = Intersection::new(4.0, shape.clone());
+            let comps = Computation::new(&i, &r);
+            assert_eq!(comps.t, i.t);
+            assert_eq!(comps.object, i.s);
+            assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
+            assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+            assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0));
+        }
+        #[test]
+        fn test_hit_outside() {
+            let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+            let shape = Sphere::new();
+            let i = Intersection::new(4.0, shape.clone());
+            let comps = Computation::new(&i, &r);
+            assert!(!comps.inside);
+        }
+        #[test]
+        fn test_hit_inside() {
+            let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
+            let shape = Sphere::new();
+            let i = Intersection::new(1.0, shape.clone());
+            let comps = Computation::new(&i, &r);
+            assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
+            assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
+            assert!(comps.inside);
+            assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0))
+        }
+    }
+}
