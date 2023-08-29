@@ -5,13 +5,14 @@ use super::tuple::{Tuple, TupleType};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Matrice {
-    size: usize,
-    matrice: Vec<Vec<f32>>,
+    pub size: usize,
+    pub matrice: Vec<Vec<f32>>,
 }
 
 impl Eq for Matrice {}
 
 impl Matrice {
+    //TODO: add 2d matrix as input
     pub fn new(size: usize) -> Self {
         Matrice {
             size,

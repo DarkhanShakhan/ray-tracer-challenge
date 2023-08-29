@@ -1,4 +1,4 @@
-use super::matrice::Matrice;
+use super::{matrice::Matrice, tuple::Tuple};
 
 pub fn translation(x: f32, y: f32, z: f32) -> Matrice {
     let mut out = Matrice::identity_matrix(4);
@@ -53,6 +53,21 @@ pub fn shearing(xy: f32, xz: f32, yx: f32, yz: f32, zx: f32, zy: f32) -> Matrice
     matrice
 }
 
+pub fn view_transformation(from: Tuple, to: Tuple, up: Tuple) -> Matrice {
+    let forward = (to - from).normalize();
+    let left = forward.cross(&up.normalize());
+    let true_up = left.cross(&forward);
+    Matrice {
+        size: 4,
+        matrice: vec![
+            vec![left.x, left.y, left.z, 0.0],
+            vec![true_up.x, true_up.y, true_up.z, 0.0],
+            vec![-forward.x, -forward.y, -forward.z, 0.0],
+            vec![0.0, 0.0, 0.0, 1.0],
+        ],
+    } * translation(-from.x, -from.y, -from.z)
+}
+
 #[cfg(test)]
 mod translation_tests {
     use crate::features::{transformations::translation, tuple::Tuple};
@@ -82,7 +97,7 @@ mod translation_tests {
 
 #[cfg(test)]
 mod scaling_tests {
-    use crate::features::{transformations::scaling, tuple::Tuple};
+    use super::*;
     #[test]
     fn test_scaling_matrix_to_point() {
         let transform = scaling(2.0, 3.0, 4.0);
@@ -117,12 +132,7 @@ mod scaling_tests {
 mod rotation_tests {
     use std::f32::consts::PI;
 
-    use crate::features::{
-        transformations::{rotation_y, rotation_z},
-        tuple::Tuple,
-    };
-
-    use super::rotation_x;
+    use super::*;
 
     #[test]
     fn test_rotation_x() {
@@ -173,9 +183,7 @@ mod rotation_tests {
 
 #[cfg(test)]
 mod shearing_tests {
-    use crate::features::tuple::Tuple;
-
-    use super::shearing;
+    use super::*;
 
     #[test]
     fn test_shearing_transformation_x_to_y() {
@@ -193,11 +201,8 @@ mod shearing_tests {
 
 #[cfg(test)]
 mod chained_tests {
+    use super::*;
     use std::f32::consts::PI;
-
-    use crate::features::tuple::Tuple;
-
-    use super::{rotation_x, scaling, translation};
 
     #[test]
     fn test_chained_tranformation() {
@@ -207,5 +212,46 @@ mod chained_tests {
         let c = translation(10.0, 5.0, 7.0);
         let t = c * b * a;
         assert_eq!(t * p, Tuple::point(15.0, 0.0, 7.0));
+    }
+}
+
+#[cfg(test)]
+mod view_transformation_tests {
+    use super::*;
+
+    #[test]
+    fn test_default_view() {
+        let from = Tuple::point(0.0, 0.0, 0.0);
+        let to = Tuple::point(0.0, 0.0, -1.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = view_transformation(from, to, up);
+        assert_eq!(t, Matrice::identity_matrix(4))
+    }
+
+    #[test]
+    fn test_positive_z_direction() {
+        let from = Tuple::point(0.0, 0.0, 0.0);
+        let to = Tuple::point(0.0, 0.0, 1.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = view_transformation(from, to, up);
+        assert_eq!(t, scaling(-1.0, 1.0, -1.0))
+    }
+
+    #[test]
+    fn test_moving_world() {
+        let from = Tuple::point(0.0, 0.0, 8.0);
+        let to = Tuple::point(0.0, 0.0, 0.0);
+        let up = Tuple::vector(0.0, 1.0, 0.0);
+        let t = view_transformation(from, to, up);
+        assert_eq!(t, translation(0.0, 0.0, -8.0))
+    }
+
+    #[test]
+    fn test_arbitrary_view() {
+        let from = Tuple::point(1.0, 3.0, 2.0);
+        let to = Tuple::point(4.0, -2.0, 8.0);
+        let up = Tuple::vector(1.0, 1.0, 0.0);
+        let t = view_transformation(from, to, up);
+        println!("{:?}", t);
     }
 }
