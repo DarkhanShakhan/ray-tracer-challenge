@@ -5,7 +5,9 @@ use crate::features::{
     lights::Light,
     materials::Material,
     spheres::Sphere,
-    transformations::{rotation_x, rotation_y, scaling, translation, view_transformation},
+    transformations::{
+        rotation_x, rotation_y, scaling, shearing, translation, view_transformation,
+    },
     tuple::Tuple,
     world::World,
 };
@@ -21,29 +23,17 @@ pub fn draw_sphere() {
     floor.material.color = Tuple::color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
-    let mut left_wall = Sphere::new();
-    left_wall.transform = translation(0.0, 0.0, 5.0)
-        * rotation_y(-(PI / 4.0))
-        * rotation_x(PI / 2.0)
-        * scaling(10.0, 0.01, 10.0);
-    left_wall.material = floor.material.clone();
-
-    let mut right_wall = Sphere::new();
-    right_wall.transform = translation(0.0, 0.0, 5.0)
-        * rotation_y(PI / 4.0)
-        * rotation_x(PI / 2.0)
-        * scaling(10.0, 0.01, 10.0);
-    right_wall.material = floor.material.clone();
-
     let mut middle = Sphere::new();
-    middle.transform = translation(-0.5, 1.0, 0.5);
+    middle.transform = translation(1.5, 1.0, 0.5);
     middle.material = Material::new();
     middle.material.color = Tuple::color(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
 
     let mut right = Sphere::new();
-    right.transform = translation(1.5, 0.5, -0.5) * scaling(0.5, 0.5, 0.5);
+    right.transform = translation(-0.5, 1.0, 0.0)
+        * scaling(0.5, 0.5, 0.5)
+        * shearing(-0.2, -1.5, -1.5, -1.5, -1.5, -1.5);
     right.material = Material::new();
     right.material.color = Tuple::color(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
@@ -56,11 +46,8 @@ pub fn draw_sphere() {
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
 
-    let world = World::new(
-        light.clone(),
-        &[floor, left_wall, right_wall, middle, right, left],
-    );
-    let mut camera = Camera::new(600.0, 300.0, PI / 3.0);
+    let world = World::new(light.clone(), &[floor, middle, right, left]);
+    let mut camera = Camera::new(1200.0, 600.0, PI / 3.0);
     camera.transform = view_transformation(
         Tuple::point(0.0, 1.5, -5.0),
         Tuple::point(0.0, 1.0, 0.0),

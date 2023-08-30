@@ -140,7 +140,7 @@ mod world_tests {
         let i = Intersection::new(0.5, shape);
         let comps = Computation::new(&i, &r);
         let c = w.shade_hit(&comps);
-        assert_eq!(c, Tuple::color(0.90498, 0.90498, 0.90498))
+        assert_eq!(c, Tuple::color(0.9049522, 0.9049522, 0.9049522))
     }
     #[test]
     fn testing_shade_hit_given_intersection_in_shadow() {

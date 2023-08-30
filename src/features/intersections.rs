@@ -193,7 +193,6 @@ mod hit_tests {
     }
 }
 pub mod computations {
-    use std::f32::EPSILON;
 
     use crate::features::{rays::Ray, spheres::Sphere, tuple::Tuple};
 
@@ -224,7 +223,7 @@ pub mod computations {
                 eyev: -(r.direction),
                 normalv,
                 inside,
-                over_point: r.position(i.t) + normalv * 0.0001,
+                over_point: r.position(i.t) + (normalv * 0.0001),
             }
         }
     }
