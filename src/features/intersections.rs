@@ -224,7 +224,7 @@ pub mod computations {
                 eyev: -(r.direction),
                 normalv,
                 inside,
-                over_point: r.position(i.t) + normalv * EPSILON,
+                over_point: r.position(i.t) + normalv * 0.0001,
             }
         }
     }

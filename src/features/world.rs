@@ -24,11 +24,11 @@ impl World {
         self.light = light;
     }
     pub fn shade_hit(&self, comps: &Computation) -> Tuple {
-        let shadowed = self.is_shadowed(&comps.point);
+        let shadowed = self.is_shadowed(&comps.over_point);
         lightning(
             &comps.object.material,
             &self.light,
-            &comps.point,
+            &comps.over_point,
             &comps.eyev,
             &comps.normalv,
             shadowed,
