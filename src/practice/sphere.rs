@@ -1,50 +1,75 @@
+use std::f32::consts::PI;
+
 use indicatif::ProgressBar;
 
 use crate::features::{
-    canvas::Canvas,
-    intersections::{hit, intersect},
+    camera::cameras::Camera,
+    // canvas::Canvas,
+    // intersections::{hit, intersect},
     lights::Light,
-    materials::lightning,
+    materials::{lightning, Material},
     rays::Ray,
     spheres::Sphere,
-    transformations::rotation_x,
+    transformations::{rotation_x, rotation_y, scaling, translation, view_transformation},
     tuple::Tuple,
+    world::World,
 };
 
 pub fn draw_sphere() {
-    let origin = Tuple::point(0.0, 0.0, -5.0);
-    let wall_size = 7.0;
-    let canvas_pixels = 500.0;
-    let wall_z = 10.0;
-    let pixel_size = wall_size / canvas_pixels;
-    let half = wall_size / 2.0;
-    let mut canvas = Canvas::new(canvas_pixels as usize, canvas_pixels as usize);
-    let mut shape = Sphere::new();
-    shape.material.color = Tuple::color(1.0, 0.2, 1.0);
     let light_position = Tuple::point(-10.0, 10.0, -10.0);
     let light_color = Tuple::color(1.0, 1.0, 1.0);
     let light = Light::new(light_position, light_color);
 
-    let mut color = Tuple::default_color();
-    let bar = ProgressBar::new(canvas.height as u64);
-    for y in 0..canvas_pixels as usize {
-        let world_y = half - (pixel_size * y as f32);
-        for x in 0..canvas_pixels as usize {
-            let world_x = -half + (pixel_size * x as f32);
-            let position = Tuple::point(world_x, world_y, wall_z);
-            let ray = Ray::new(origin, (position - origin).normalize());
-            let xs = intersect(&shape, &ray);
-            if let Some(hit) = hit(xs) {
-                let point = ray.position(hit.t);
-                let normal = hit.s.normal_at(point);
-                let eye = -ray.direction;
-                color = lightning(&hit.s.material, &light, &position, &eye, &normal);
-            }
+    let mut floor = Sphere::new();
+    floor.transform = scaling(10.0, 0.01, 10.0);
+    floor.material = Material::new();
+    floor.material.color = Tuple::color(1.0, 0.9, 0.9);
+    floor.material.specular = 0.0;
 
-            canvas.write_pixel(x, y, color);
-            color = Tuple::default_color();
-        }
-        bar.inc(1);
-    }
-    canvas.to_ppm();
+    let mut left_wall = Sphere::new();
+    left_wall.transform = translation(0.0, 0.0, 5.0)
+        * rotation_y(-(PI / 4.0))
+        * rotation_x(PI / 2.0)
+        * scaling(10.0, 0.01, 10.0);
+    left_wall.material = floor.material.clone();
+
+    let mut right_wall = Sphere::new();
+    right_wall.transform = translation(0.0, 0.0, 5.0)
+        * rotation_y(PI / 4.0)
+        * rotation_x(PI / 2.0)
+        * scaling(10.0, 0.01, 10.0);
+    right_wall.material = floor.material.clone();
+
+    let mut middle = Sphere::new();
+    middle.transform = translation(-0.5, 1.0, 0.5);
+    middle.material = Material::new();
+    middle.material.color = Tuple::color(0.1, 1.0, 0.5);
+    middle.material.diffuse = 0.7;
+    middle.material.specular = 0.3;
+
+    let mut right = Sphere::new();
+    right.transform = translation(1.5, 0.5, -0.5) * scaling(0.5, 0.5, 0.5);
+    right.material = Material::new();
+    right.material.color = Tuple::color(0.5, 1.0, 0.1);
+    right.material.diffuse = 0.7;
+    right.material.specular = 0.3;
+
+    let mut left = Sphere::new();
+    left.transform = translation(-1.5, 0.33, -0.75) * scaling(0.33, 0.33, 0.33);
+    left.material = Material::new();
+    left.material.color = Tuple::color(1.0, 0.8, 0.1);
+    left.material.diffuse = 0.7;
+    left.material.specular = 0.3;
+
+    let world = World::new(
+        light.clone(),
+        &[floor, left_wall, right_wall, middle, right, left],
+    );
+    let mut camera = Camera::new(100.0, 50.0, PI / 3.0);
+    camera.transform = view_transformation(
+        Tuple::point(0.0, 1.5, -5.0),
+        Tuple::point(0.0, 1.0, 0.0),
+        Tuple::vector(0.0, 1.0, 0.0),
+    );
+    camera.render(&world).to_ppm();
 }

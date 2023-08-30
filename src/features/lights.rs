@@ -1,6 +1,6 @@
 use super::tuple::Tuple;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Light {
     pub position: Tuple,
     pub intensity: Tuple,
