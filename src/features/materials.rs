@@ -29,10 +29,14 @@ pub fn lightning(
     position: &Tuple,
     eyev: &Tuple,
     normalv: &Tuple,
+    in_shadow: bool,
 ) -> Tuple {
     let effective_color = material.color * light.intensity;
     let lightv = (light.position - *position).normalize();
     let ambient = effective_color * material.ambient;
+    if in_shadow {
+        return ambient;
+    }
     let light_dot_normal = lightv.dot(normalv);
     let mut diffuse = Tuple::default_color();
     let mut specular = Tuple::default_color();
@@ -78,7 +82,7 @@ mod lightning_tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::point(0.0, 0.0, -10.0), Tuple::color(1.0, 1.0, 1.0));
-        let result = lightning(&m, &light, &position, &eyev, &normalv);
+        let result = lightning(&m, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Tuple::color(1.9, 1.9, 1.9))
     }
 
@@ -89,7 +93,7 @@ mod lightning_tests {
         let eyev = Tuple::vector(0.0, 2.0_f32.sqrt() / 2.0, -(2.0_f32.sqrt() / 2.0));
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::point(0.0, 0.0, -10.0), Tuple::color(1.0, 1.0, 1.0));
-        let result = lightning(&m, &light, &position, &eyev, &normalv);
+        let result = lightning(&m, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Tuple::color(1.0, 1.0, 1.0))
     }
 
@@ -100,7 +104,7 @@ mod lightning_tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::point(0.0, 10.0, -10.0), Tuple::color(1.0, 1.0, 1.0));
-        let result = lightning(&m, &light, &position, &eyev, &normalv);
+        let result = lightning(&m, &light, &position, &eyev, &normalv, false);
         assert_eq!(result, Tuple::color(0.7364, 0.7364, 0.7364))
     }
 
@@ -111,7 +115,19 @@ mod lightning_tests {
         let eyev = Tuple::vector(0.0, 0.0, -1.0);
         let normalv = Tuple::vector(0.0, 0.0, -1.0);
         let light = Light::new(Tuple::point(0.0, 0.0, 10.0), Tuple::color(1.0, 1.0, 1.0));
-        let result = lightning(&m, &light, &position, &eyev, &normalv);
+        let result = lightning(&m, &light, &position, &eyev, &normalv, false);
+        assert_eq!(result, Tuple::color(0.1, 0.1, 0.1))
+    }
+
+    #[test]
+    fn test_lightning_in_shadow() {
+        let m = Material::new();
+        let position = Tuple::point(0.0, 0.0, 0.0);
+        let eyev = Tuple::vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::vector(0.0, 0.0, -1.0);
+        let light = Light::new(Tuple::point(0.0, 0.0, -10.0), Tuple::color(1.0, 1.0, 1.0));
+        let in_shadow = true;
+        let result = lightning(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Tuple::color(0.1, 0.1, 0.1))
     }
 }

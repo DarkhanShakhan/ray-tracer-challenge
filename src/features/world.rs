@@ -30,6 +30,7 @@ impl World {
             &comps.point,
             &comps.eyev,
             &comps.normalv,
+            false,
         )
     }
     pub fn color_at(&self, r: &Ray) -> Tuple {
@@ -38,6 +39,20 @@ impl World {
             return self.shade_hit(&comps);
         }
         Tuple::default_color()
+    }
+
+    pub fn is_shadowed(&self, point: &Tuple) -> bool {
+        let v = self.light.position - *point;
+        let distance = v.magnitude();
+        let direction = v.normalize();
+        let r = Ray::new(*point, direction);
+        let intersections = intersect_world(self, &r);
+        if let Some(h) = hit(intersections) {
+            if h.t < distance {
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -72,6 +87,8 @@ mod world_tests {
         intersections::{Computations::Computation, Intersection},
         lights::Light,
         rays::Ray,
+        spheres::Sphere,
+        transformations::translation,
         tuple::Tuple,
     };
 
@@ -124,6 +141,23 @@ mod world_tests {
         let c = w.shade_hit(&comps);
         assert_eq!(c, Tuple::color(0.90498, 0.90498, 0.90498))
     }
+    #[test]
+    fn testing_shade_hit_given_intersection_in_shadow() {
+        let mut w = World::default();
+        w.set_light(Light::new(
+            Tuple::point(0.0, 0.0, -10.0),
+            Tuple::color(1.0, 1.0, 1.0),
+        ));
+        let s1 = Sphere::new();
+        let mut s2 = Sphere::new();
+        s2.transform = translation(0.0, 0.0, 10.0);
+        w.shapes = vec![s1, s2.clone()];
+        let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let i = Intersection::new(4.0, s2);
+        let comps = Computation::new(&i, &r);
+        let c = w.shade_hit(&comps);
+        assert_eq!(c, Tuple::color(0.1, 0.1, 0.1));
+    }
 
     #[cfg(test)]
     mod world_color_tests {
@@ -153,6 +187,37 @@ mod world_tests {
             let r = Ray::new(Tuple::point(0.0, 0.0, 0.75), Tuple::vector(0.0, 0.0, -1.0));
             let c = w.color_at(&r);
             assert_eq!(c, w.shapes[1].material.color);
+        }
+    }
+
+    #[cfg(test)]
+    mod is_shadowed_tests {
+        use super::*;
+        #[test]
+        fn testing_no_shadow() {
+            let world = World::default();
+            let point = Tuple::point(0.0, 10.0, 0.0);
+            assert!(!world.is_shadowed(&point))
+        }
+
+        #[test]
+        fn testing_object_between_point_light() {
+            let world = World::default();
+            let point = Tuple::point(10.0, -10.0, 10.0);
+            assert!(world.is_shadowed(&point))
+        }
+
+        #[test]
+        fn testing_object_behind_light() {
+            let world = World::default();
+            let point = Tuple::point(-20.0, 10.0, -20.0);
+            assert!(!world.is_shadowed(&point))
+        }
+        #[test]
+        fn testing_object_behind_point() {
+            let world = World::default();
+            let point = Tuple::point(-2.0, 2.0, -2.0);
+            assert!(!world.is_shadowed(&point))
         }
     }
 }
