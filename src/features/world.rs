@@ -1,5 +1,5 @@
 use super::{
-    intersections::{self, hit, intersect, intersections, Computations::Computation, Intersection},
+    intersections::{computations::Computation, hit, intersect, intersections, Intersection},
     lights::Light,
     materials::lightning,
     rays::Ray,
@@ -24,13 +24,14 @@ impl World {
         self.light = light;
     }
     pub fn shade_hit(&self, comps: &Computation) -> Tuple {
+        let shadowed = self.is_shadowed(&comps.point);
         lightning(
             &comps.object.material,
             &self.light,
             &comps.point,
             &comps.eyev,
             &comps.normalv,
-            false,
+            shadowed,
         )
     }
     pub fn color_at(&self, r: &Ray) -> Tuple {
@@ -84,7 +85,7 @@ impl Default for World {
 #[cfg(test)]
 mod world_tests {
     use crate::features::{
-        intersections::{Computations::Computation, Intersection},
+        intersections::{computations::Computation, Intersection},
         lights::Light,
         rays::Ray,
         spheres::Sphere,

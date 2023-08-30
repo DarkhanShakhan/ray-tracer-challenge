@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::features::tuple::Tuple;
 
 use super::{
@@ -194,7 +192,9 @@ mod hit_tests {
         assert!(i == i4);
     }
 }
-pub mod Computations {
+pub mod computations {
+    use std::f32::EPSILON;
+
     use crate::features::{rays::Ray, spheres::Sphere, tuple::Tuple};
 
     use super::Intersection;
@@ -206,6 +206,7 @@ pub mod Computations {
         pub eyev: Tuple,
         pub normalv: Tuple,
         pub inside: bool,
+        pub over_point: Tuple,
     }
 
     impl Computation {
@@ -223,13 +224,17 @@ pub mod Computations {
                 eyev: -(r.direction),
                 normalv,
                 inside,
+                over_point: r.position(i.t) + normalv * EPSILON,
             }
         }
     }
     #[cfg(test)]
     mod computation_tests {
+        use std::f32::EPSILON;
+
         use crate::features::{
-            intersections::Intersection, rays::Ray, spheres::Sphere, tuple::Tuple,
+            intersections::Intersection, rays::Ray, spheres::Sphere, transformations::translation,
+            tuple::Tuple,
         };
 
         use super::Computation;
@@ -264,6 +269,16 @@ pub mod Computations {
             assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
             assert!(comps.inside);
             assert_eq!(comps.normalv, Tuple::vector(0.0, 0.0, -1.0))
+        }
+        #[test]
+        fn test_hit_offset_point() {
+            let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+            let mut shape = Sphere::new();
+            shape.transform = translation(0.0, 0.0, 1.0);
+            let i = Intersection::new(5.0, shape.clone());
+            let comps = Computation::new(&i, &r);
+            assert!(comps.over_point.z < -EPSILON / 2.0);
+            assert!(comps.point.z > comps.over_point.z)
         }
     }
 }

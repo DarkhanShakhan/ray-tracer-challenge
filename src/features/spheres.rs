@@ -3,7 +3,6 @@ use uuid::Uuid;
 use super::{
     materials::Material,
     matrice::Matrice,
-    rays::Ray,
     tuple::{Tuple, TupleType},
 };
 

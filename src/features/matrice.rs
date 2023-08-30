@@ -20,7 +20,7 @@ impl Matrice {
         }
     }
 
-    pub fn random(size: usize) -> Self {
+    fn random(size: usize) -> Self {
         let mut rng = rand::thread_rng();
         let mut out = Self::new(size);
         for ix in 0..size {

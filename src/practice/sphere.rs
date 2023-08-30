@@ -1,14 +1,9 @@
 use std::f32::consts::PI;
 
-use indicatif::ProgressBar;
-
 use crate::features::{
     camera::cameras::Camera,
-    // canvas::Canvas,
-    // intersections::{hit, intersect},
     lights::Light,
-    materials::{lightning, Material},
-    rays::Ray,
+    materials::Material,
     spheres::Sphere,
     transformations::{rotation_x, rotation_y, scaling, translation, view_transformation},
     tuple::Tuple,
@@ -65,7 +60,7 @@ pub fn draw_sphere() {
         light.clone(),
         &[floor, left_wall, right_wall, middle, right, left],
     );
-    let mut camera = Camera::new(100.0, 50.0, PI / 3.0);
+    let mut camera = Camera::new(600.0, 300.0, PI / 3.0);
     camera.transform = view_transformation(
         Tuple::point(0.0, 1.5, -5.0),
         Tuple::point(0.0, 1.0, 0.0),

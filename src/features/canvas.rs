@@ -1,5 +1,3 @@
-use indicatif::ProgressBar;
-
 use super::tuple::Tuple;
 
 pub struct Canvas {
