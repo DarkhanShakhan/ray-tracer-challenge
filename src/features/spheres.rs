@@ -25,7 +25,7 @@ impl Sphere {
         }
     }
 }
-impl Shape for Sphere {
+impl Sphere {
     fn get_material(&self) -> Material {
         self.material.clone()
     }
