@@ -77,6 +77,7 @@ impl Default for World {
         material.color = Tuple::color(0.8, 1.0, 0.6);
         material.diffuse = 0.7;
         material.specular = 0.2;
+        s1.set_material(material);
         let mut s2 = Shape::Sphere(Sphere::new());
         s2.set_transform(scaling(0.5, 0.5, 0.5));
         let shapes = &[s1, s2];
