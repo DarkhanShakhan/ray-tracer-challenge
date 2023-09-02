@@ -1,17 +1,14 @@
 use crate::features::tuple::Tuple;
 
-use super::{
-    rays::{transform, Ray},
-    spheres::Sphere,
-};
+use super::shape::Shape;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Intersection {
     pub t: f32,
-    pub s: Sphere,
+    pub s: Shape,
 }
 
 impl Intersection {
-    pub fn new(t: f32, s: Sphere) -> Self {
+    pub fn new(t: f32, s: Shape) -> Self {
         Self { t, s }
     }
 }
@@ -19,22 +16,6 @@ impl Intersection {
 pub fn intersections(xs: &mut [Intersection]) -> Vec<Intersection> {
     xs.sort_by(|a, b| a.t.total_cmp(&b.t));
     xs.to_vec()
-}
-
-pub fn intersect(s: &Sphere, r: &Ray) -> Vec<Intersection> {
-    let r2 = transform(r.clone(), s.transform.inverse().unwrap());
-    let sphere_to_ray = r2.origin - Tuple::point(0.0, 0.0, 0.0);
-    let a = r2.direction.dot(&r2.direction);
-    let b = 2.0 * r2.direction.dot(&sphere_to_ray);
-    let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
-    let disrciminant = b * b - 4.0 * a * c;
-    if disrciminant < 0.0 {
-        return vec![];
-    }
-    intersections(&mut [
-        Intersection::new((-b - disrciminant.sqrt()) / (2.0 * a), s.clone()),
-        Intersection::new((-b + disrciminant.sqrt()) / (2.0 * a), s.clone()),
-    ])
 }
 
 pub fn hit(xs: Vec<Intersection>) -> Option<Intersection> {
@@ -48,7 +29,7 @@ pub fn hit(xs: Vec<Intersection>) -> Option<Intersection> {
 
 #[cfg(test)]
 mod intersection_tests {
-    use super::intersect;
+    use crate::features::shape::Shape;
     use crate::features::spheres::Sphere;
     use crate::features::{rays::Ray, tuple::Tuple};
 
@@ -56,7 +37,7 @@ mod intersection_tests {
 
     #[test]
     fn test_creating_intersection() {
-        let s = Sphere::new();
+        let s = Shape::Sphere(Sphere::new());
         let i = Intersection::new(3.5, s.clone());
         assert_eq!(i.t, 3.5);
         assert_eq!(i.s, s);
@@ -65,8 +46,8 @@ mod intersection_tests {
     #[test]
     fn test_intersecting_sphere_two_points() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
-        let xs = intersect(&s, &r);
+        let s = Shape::Sphere(Sphere::new());
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
         assert_eq!(xs[1].t, 6.0);
@@ -76,8 +57,8 @@ mod intersection_tests {
     #[test]
     fn test_intersecting_sphere_tangent() {
         let r = Ray::new(Tuple::point(0.0, 1.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
-        let xs = intersect(&s, &r);
+        let s = Shape::Sphere(Sphere::new());
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 5.0);
         assert_eq!(xs[1].t, 5.0);
@@ -86,15 +67,15 @@ mod intersection_tests {
     #[test]
     fn test_no_intersection() {
         let r = Ray::new(Tuple::point(0.0, 2.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
-        let xs = intersect(&s, &r);
+        let s = Shape::Sphere(Sphere::new());
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 0);
     }
     #[test]
     fn test_intersecting_inside_sphere() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
-        let xs = intersect(&s, &r);
+        let s = Shape::Sphere(Sphere::new());
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -1.0);
         assert_eq!(xs[1].t, 1.0);
@@ -103,8 +84,8 @@ mod intersection_tests {
     #[test]
     fn test_sphere_behind_ray() {
         let r = Ray::new(Tuple::point(0.0, 0.0, 5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let s = Sphere::new();
-        let xs = intersect(&s, &r);
+        let s = Shape::Sphere(Sphere::new());
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, -6.0);
         assert_eq!(xs[1].t, -4.0);
@@ -115,19 +96,18 @@ mod intersection_tests {
 mod intersect_transformed_sphere_test {
     use crate::features::{
         rays::Ray,
+        shape::Shape,
         spheres::Sphere,
         transformations::{scaling, translation},
         tuple::Tuple,
     };
 
-    use super::intersect;
-
     #[test]
     fn test_scaled_sphere() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         s.set_transform(scaling(2.0, 2.0, 2.0));
-        let xs = intersect(&s, &r);
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 3.0);
         assert_eq!(xs[1].t, 7.0);
@@ -136,9 +116,9 @@ mod intersect_transformed_sphere_test {
     #[test]
     fn test_translated_sphere() {
         let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-        let mut s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         s.set_transform(translation(5.0, 0.0, 0.0));
-        let xs = intersect(&s, &r);
+        let xs = s.intersect(&r);
         assert_eq!(xs.len(), 0);
     }
 }
@@ -147,6 +127,7 @@ mod intersect_transformed_sphere_test {
 mod hit_tests {
     use crate::features::{
         intersections::{hit, intersections},
+        shape::Shape,
         spheres::Sphere,
     };
 
@@ -154,7 +135,7 @@ mod hit_tests {
 
     #[test]
     fn test_all_intersections_have_positive_t() {
-        let s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(1.0, s.clone());
         let i2 = Intersection::new(2.0, s.clone());
         let xs = intersections(&mut [i2, i1.clone()]);
@@ -163,7 +144,7 @@ mod hit_tests {
     }
     #[test]
     fn test_some_intersections_have_negative_t() {
-        let s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(-1.0, s.clone());
         let i2 = Intersection::new(1.0, s.clone());
         let xs = intersections(&mut [i2.clone(), i1]);
@@ -172,7 +153,7 @@ mod hit_tests {
     }
     #[test]
     fn test_all_intersections_have_negative_t() {
-        let s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(-2.0, s.clone());
         let i2 = Intersection::new(-1.0, s);
         let xs = intersections(&mut [i2, i1]);
@@ -182,7 +163,7 @@ mod hit_tests {
 
     #[test]
     fn test_lowest_non_negative_t() {
-        let s = Sphere::new();
+        let mut s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(5.0, s.clone());
         let i2 = Intersection::new(7.0, s.clone());
         let i3 = Intersection::new(-3.0, s.clone());
@@ -194,13 +175,13 @@ mod hit_tests {
 }
 pub mod computations {
 
-    use crate::features::{rays::Ray, spheres::Sphere, tuple::Tuple};
+    use crate::features::{rays::Ray, shape::Shape, tuple::Tuple};
 
     use super::Intersection;
 
     pub struct Computation {
         pub t: f32,
-        pub object: Sphere,
+        pub object: Shape,
         pub point: Tuple,
         pub eyev: Tuple,
         pub normalv: Tuple,
@@ -232,8 +213,8 @@ pub mod computations {
         use std::f32::EPSILON;
 
         use crate::features::{
-            intersections::Intersection, rays::Ray, spheres::Sphere, transformations::translation,
-            tuple::Tuple,
+            intersections::Intersection, rays::Ray, shape::Shape, spheres::Sphere,
+            transformations::translation, tuple::Tuple,
         };
 
         use super::Computation;
@@ -241,8 +222,8 @@ pub mod computations {
         #[test]
         fn test_prepare_computation() {
             let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-            let shape = Sphere::new();
-            let i = Intersection::new(4.0, shape.clone());
+            let mut s = Shape::Sphere(Sphere::new());
+            let i = Intersection::new(4.0, s.clone());
             let comps = Computation::new(&i, &r);
             assert_eq!(comps.t, i.t);
             assert_eq!(comps.object, i.s);
@@ -253,16 +234,16 @@ pub mod computations {
         #[test]
         fn test_hit_outside() {
             let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-            let shape = Sphere::new();
-            let i = Intersection::new(4.0, shape.clone());
+            let mut s = Shape::Sphere(Sphere::new());
+            let i = Intersection::new(4.0, s.clone());
             let comps = Computation::new(&i, &r);
             assert!(!comps.inside);
         }
         #[test]
         fn test_hit_inside() {
             let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-            let shape = Sphere::new();
-            let i = Intersection::new(1.0, shape.clone());
+            let mut s = Shape::Sphere(Sphere::new());
+            let i = Intersection::new(1.0, s.clone());
             let comps = Computation::new(&i, &r);
             assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
             assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
@@ -272,9 +253,9 @@ pub mod computations {
         #[test]
         fn test_hit_offset_point() {
             let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-            let mut shape = Sphere::new();
-            shape.transform = translation(0.0, 0.0, 1.0);
-            let i = Intersection::new(5.0, shape.clone());
+            let mut s = Shape::Sphere(Sphere::new());
+            s.set_transform(translation(0.0, 0.0, 1.0));
+            let i = Intersection::new(5.0, s.clone());
             let comps = Computation::new(&i, &r);
             assert!(comps.over_point.z < -EPSILON / 2.0);
             assert!(comps.point.z > comps.over_point.z)
