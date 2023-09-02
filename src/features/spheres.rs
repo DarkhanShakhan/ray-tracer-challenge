@@ -1,8 +1,11 @@
 use uuid::Uuid;
 
 use super::{
+    intersections::{self, intersections, Intersection},
     materials::Material,
     matrice::Matrice,
+    rays::{transform, Ray},
+    shape::Shape,
     tuple::{Tuple, TupleType},
 };
 
@@ -30,6 +33,27 @@ impl Sphere {
         let mut world_normal = self.transform.inverse().unwrap().transpose() * object_normal;
         world_normal.w = TupleType::Vector;
         world_normal.normalize()
+    }
+    pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
+        let r2 = transform(r.clone(), self.transform.inverse().unwrap());
+        let sphere_to_ray = r2.origin - Tuple::point(0.0, 0.0, 0.0);
+        let a = r2.direction.dot(&r2.direction);
+        let b = 2.0 * r2.direction.dot(&sphere_to_ray);
+        let c = sphere_to_ray.dot(&sphere_to_ray) - 1.0;
+        let disrciminant = b * b - 4.0 * a * c;
+        if disrciminant < 0.0 {
+            return vec![];
+        }
+        intersections(&mut [
+            Intersection::new(
+                (-b - disrciminant.sqrt()) / (2.0 * a),
+                Shape::Sphere(self.clone()),
+            ),
+            Intersection::new(
+                (-b + disrciminant.sqrt()) / (2.0 * a),
+                Shape::Sphere(self.clone()),
+            ),
+        ])
     }
 }
 

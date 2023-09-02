@@ -4,6 +4,7 @@ use crate::features::{
     camera::cameras::Camera,
     lights::Light,
     materials::Material,
+    shape::Shape,
     spheres::Sphere,
     transformations::{
         rotation_x, rotation_y, scaling, shearing, translation, view_transformation,
@@ -46,8 +47,16 @@ pub fn draw_sphere() {
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
 
-    let world = World::new(light.clone(), &[floor, middle, right, left]);
-    let mut camera = Camera::new(1200.0, 600.0, PI / 3.0);
+    let world = World::new(
+        light.clone(),
+        &[
+            Shape::Sphere(floor),
+            Shape::Sphere(middle),
+            Shape::Sphere(right),
+            Shape::Sphere(left),
+        ],
+    );
+    let mut camera = Camera::new(300.0, 150.0, PI / 3.0);
     camera.transform = view_transformation(
         Tuple::point(0.0, 1.5, -5.0),
         Tuple::point(0.0, 1.0, 0.0),
