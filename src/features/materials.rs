@@ -1,7 +1,8 @@
-use super::{lights::Light, tuple::Tuple};
+use super::{lights::Light, patterns::Pattern, tuple::Tuple};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Material {
+    pub pattern: Option<Pattern>,
     pub color: Tuple,
     pub ambient: f32,
     pub diffuse: f32,
@@ -15,6 +16,7 @@ impl Material {
     pub fn new() -> Self {
         Material {
             color: Tuple::color(1.0, 1.0, 1.0),
+            pattern: None,
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
@@ -31,7 +33,11 @@ pub fn lightning(
     normalv: &Tuple,
     in_shadow: bool,
 ) -> Tuple {
-    let effective_color = material.color * light.intensity;
+    let mut color = material.color;
+    if let Some(c) = &material.pattern {
+        color = c.at(position)
+    }
+    let effective_color = color * light.intensity;
     let lightv = (light.position - *position).normalize();
     let ambient = effective_color * material.ambient;
     if in_shadow {
@@ -72,7 +78,7 @@ mod material_tests {
 
 #[cfg(test)]
 mod lightning_tests {
-    use crate::features::{lights::Light, tuple::Tuple};
+    use crate::features::{lights::Light, patterns::Pattern, tuple::Tuple};
 
     use super::{lightning, Material};
     #[test]
@@ -129,5 +135,42 @@ mod lightning_tests {
         let in_shadow = true;
         let result = lightning(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Tuple::color(0.1, 0.1, 0.1))
+    }
+
+    #[test]
+    fn lightning_with_pattern_applied() {
+        let mut m = Material::new();
+        m.pattern = Some(Pattern::new(
+            Tuple::color(1.0, 1.0, 1.0),
+            Tuple::color(0.0, 0.0, 0.0),
+        ));
+        m.ambient = 1.0;
+        m.diffuse = 0.0;
+        m.specular = 0.0;
+        let eyev = Tuple::vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::vector(0.0, 0.0, -1.0);
+        let light = Light::new(Tuple::point(0.0, 0.0, -10.0), Tuple::color(1.0, 1.0, 1.0));
+        assert_eq!(
+            lightning(
+                &m,
+                &light,
+                &Tuple::point(0.9, 0.0, 0.0),
+                &eyev,
+                &normalv,
+                false
+            ),
+            Tuple::color(1.0, 1.0, 1.0)
+        );
+        assert_eq!(
+            lightning(
+                &m,
+                &light,
+                &Tuple::point(1.1, 0.0, 0.0),
+                &eyev,
+                &normalv,
+                false
+            ),
+            Tuple::color(0.0, 0.0, 0.0)
+        );
     }
 }
