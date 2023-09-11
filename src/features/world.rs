@@ -28,6 +28,7 @@ impl World {
         let shadowed = self.is_shadowed(&comps.over_point);
         lightning(
             &comps.object.material(),
+            &comps.object,
             &self.light,
             &comps.over_point,
             &comps.eyev,

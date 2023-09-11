@@ -1,5 +1,3 @@
-use crate::features::tuple::Tuple;
-
 use super::shape::Shape;
 #[derive(Clone, PartialEq, Debug)]
 pub struct Intersection {
@@ -144,7 +142,7 @@ mod hit_tests {
     }
     #[test]
     fn test_some_intersections_have_negative_t() {
-        let mut s = Shape::Sphere(Sphere::new());
+        let s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(-1.0, s.clone());
         let i2 = Intersection::new(1.0, s.clone());
         let xs = intersections(&mut [i2.clone(), i1]);
@@ -153,7 +151,7 @@ mod hit_tests {
     }
     #[test]
     fn test_all_intersections_have_negative_t() {
-        let mut s = Shape::Sphere(Sphere::new());
+        let s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(-2.0, s.clone());
         let i2 = Intersection::new(-1.0, s);
         let xs = intersections(&mut [i2, i1]);
@@ -163,7 +161,7 @@ mod hit_tests {
 
     #[test]
     fn test_lowest_non_negative_t() {
-        let mut s = Shape::Sphere(Sphere::new());
+        let s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(5.0, s.clone());
         let i2 = Intersection::new(7.0, s.clone());
         let i3 = Intersection::new(-3.0, s.clone());
