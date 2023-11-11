@@ -67,6 +67,21 @@ impl World {
         let color = self.color_at(&reflect_ray);
         color * comps.object.material().reflective
     }
+    pub fn refracted_color(&self, comps: &Computation, remaining: u32) -> Tuple {
+        if comps.object.material().transparency == 0.0
+            || remaining == 0
+            || self.is_total_internal_reflection(comps)
+        {
+            return Tuple::color(0.0, 0.0, 0.0);
+        }
+        Tuple::color(1.0, 1.0, 1.0)
+    }
+    fn is_total_internal_reflection(&self, comps: &Computation) -> bool {
+        let n_ratio = comps.n1 / comps.n2;
+        let cos_i = comps.eyev.dot(&comps.normalv);
+        let sin2_t = n_ratio.powi(2) * (1.0 - cos_i.powi(2));
+        sin2_t > 1.0
+    }
 }
 
 pub fn intersect_world(world: &World, ray: &Ray) -> Vec<Intersection> {
@@ -99,7 +114,7 @@ impl Default for World {
 #[cfg(test)]
 mod world_tests {
     use crate::features::{
-        intersections::{computations::Computation, Intersection},
+        intersections::{computations::Computation, intersections, Intersection},
         lights::Light,
         rays::Ray,
         shape::Shape,
@@ -301,6 +316,63 @@ mod world_tests {
             let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 1.0, 0.0));
 
             world.color_at(&r);
+        }
+    }
+
+    #[cfg(test)]
+    mod refracted_color_tests {
+        use super::*;
+        #[test]
+        fn test_refracted_color_with_opaque_surface() {
+            let w = World::default();
+            let shape = &w.shapes[0];
+            let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+            let xs = intersections(&mut [
+                Intersection::new(4.0, shape.clone()),
+                Intersection::new(6.0, shape.clone()),
+            ]);
+            let comps = Computation::new(&xs[0], &r, &xs);
+            let c = w.refracted_color(&comps, 5);
+            assert_eq!(c, Tuple::color(0.0, 0.0, 0.0))
+        }
+
+        #[test]
+        fn test_refracted_color_at_max_recursive_depth() {
+            let mut w = World::default();
+            let shape = &mut w.shapes[0];
+            let mut m = shape.material();
+            m.transparency = 1.0;
+            m.refractive_index = 1.5;
+            shape.set_material(m);
+            let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+            let xs = intersections(&mut [
+                Intersection::new(4.0, shape.clone()),
+                Intersection::new(6.0, shape.clone()),
+            ]);
+            let comps = Computation::new(&xs[0], &r, &xs);
+            let c = w.refracted_color(&comps, 0);
+            assert_eq!(c, Tuple::color(0.0, 0.0, 0.0))
+        }
+
+        #[test]
+        fn test_refracted_color_under_total_internal_reflection() {
+            let mut w = World::default();
+            let shape = &mut w.shapes[0];
+            let mut m = shape.material();
+            m.transparency = 1.0;
+            m.refractive_index = 1.5;
+            shape.set_material(m);
+            let r = Ray::new(
+                Tuple::point(0.0, 0.0, 2_f32.sqrt() / 2.0),
+                Tuple::vector(0.0, 1.0, 0.0),
+            );
+            let xs = intersections(&mut [
+                Intersection::new(-(2_f32.sqrt() / 2.0), shape.clone()),
+                Intersection::new(2_f32.sqrt() / 2.0, shape.clone()),
+            ]);
+            let comps = Computation::new(&xs[1], &r, &xs);
+            let c = w.refracted_color(&comps, 5);
+            assert_eq!(c, Tuple::color(0.0, 0.0, 0.0))
         }
     }
 }
