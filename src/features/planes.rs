@@ -1,21 +1,25 @@
 use crate::features::{rays::transform, shape::Shape};
 
-use super::{intersections::Intersection, matrice::Matrice, rays::Ray, tuple::Tuple};
+use super::{
+    intersections::Intersection, materials::Material, matrice::Matrice, rays::Ray, tuple::Tuple,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Plane {
+    pub material: Material,
     pub transform: Matrice,
 }
 
 impl Plane {
     pub fn new() -> Self {
         Plane {
+            material: Material::new(),
             transform: Matrice::identity_matrix(4),
         }
     }
 
     pub fn normal_at(&self, _point: Tuple) -> Tuple {
-        self.transform.inverse().unwrap() * Tuple::vector(0.0, 1.0, 0.0)
+        self.transform.clone() * Tuple::vector(0.0, 1.0, 0.0)
     }
 
     pub fn set_transform(&mut self, transform: Matrice) {
@@ -26,11 +30,11 @@ impl Plane {
         self.transform.clone()
     }
     pub fn intersect(&self, ray: &Ray) -> Vec<Intersection> {
-        let r = transform(ray.clone(), self.transform.clone());
-        if r.direction.y.abs() < 0.00001 {
+        // let r = transform(ray.clone(), self.transform.clone());
+        if ray.direction.y.abs() < 0.00001 {
             return vec![];
         }
-        let t = (-r.origin.y) / r.direction.y;
+        let t = (-ray.origin.y) / ray.direction.y;
         vec![Intersection::new(t, Shape::Plane(self.clone()))]
     }
 }

@@ -1,6 +1,11 @@
 use super::{
-    intersections::Intersection, materials::Material, matrice::Matrice, planes::Plane, rays::Ray,
-    spheres::Sphere, tuple::Tuple,
+    intersections::Intersection,
+    materials::Material,
+    matrice::Matrice,
+    planes::Plane,
+    rays::{transform, Ray},
+    spheres::Sphere,
+    tuple::Tuple,
 };
 
 #[derive(Clone, PartialEq, Debug)]
@@ -11,9 +16,10 @@ pub enum Shape {
 
 impl Shape {
     pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
+        let ray = transform(r, self.transform().inverse().unwrap());
         match self {
-            Shape::Sphere(s) => s.intersect(r),
-            Shape::Plane(p) => p.intersect(r),
+            Shape::Sphere(s) => s.intersect(&ray),
+            Shape::Plane(p) => p.intersect(&ray),
         }
     }
     pub fn set_transform(&mut self, t: Matrice) {
@@ -37,13 +43,18 @@ impl Shape {
     pub fn material(&self) -> Material {
         match self {
             Shape::Sphere(s) => s.material.clone(),
-            Shape::Plane(_) => Material::new(),
+            Shape::Plane(p) => p.material.clone(),
         }
     }
     pub fn set_material(&mut self, m: Material) {
         match self {
             Shape::Sphere(s) => s.material = m,
             Shape::Plane(_) => {}
+        }
+    }
+    pub fn set_material_ambient(&mut self, ambient: f32) {
+        if let Shape::Sphere(s) = self {
+            s.material.ambient = ambient
         }
     }
 }

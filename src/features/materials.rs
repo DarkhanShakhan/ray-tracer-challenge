@@ -5,9 +5,12 @@ pub struct Material {
     pub pattern: Option<Pattern>,
     pub color: Tuple,
     pub ambient: f32,
+    pub transparency: f32,
+    pub refractive_index: f32,
     pub diffuse: f32,
     pub specular: f32,
     pub shininess: f32,
+    pub reflective: f32,
 }
 
 impl Eq for Material {}
@@ -17,10 +20,13 @@ impl Material {
         Material {
             color: Tuple::color(1.0, 1.0, 1.0),
             pattern: None,
+            transparency: 0.0,
+            refractive_index: 1.0,
             ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            reflective: 0.0,
         }
     }
 }
@@ -74,6 +80,29 @@ mod material_tests {
         assert_eq!(m.diffuse, 0.9);
         assert_eq!(m.specular, 0.9);
         assert_eq!(m.shininess, 200.0);
+    }
+}
+
+#[cfg(test)]
+mod reflective_tests {
+    use super::*;
+
+    #[test]
+    fn test_reflective_field() {
+        let m = Material::new();
+        assert_eq!(m.reflective, 0.0);
+    }
+}
+
+#[cfg(test)]
+mod transparency_refractive_tests {
+    use super::*;
+
+    #[test]
+    fn test_transparency_refractive_index_default_material() {
+        let m = Material::new();
+        assert_eq!(m.transparency, 0.0);
+        assert_eq!(m.refractive_index, 1.0);
     }
 }
 

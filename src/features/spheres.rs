@@ -24,6 +24,13 @@ impl Sphere {
             transform: Matrice::identity_matrix(4),
         }
     }
+    pub fn glass_sphere() -> Self {
+        let mut s = Sphere::new();
+        s.transform = Matrice::identity_matrix(4);
+        s.material.transparency = 1.0;
+        s.material.refractive_index = 1.5;
+        s
+    }
 }
 impl Sphere {
     fn get_material(&self) -> Material {
@@ -45,8 +52,8 @@ impl Sphere {
         world_normal.w = TupleType::Vector;
         world_normal.normalize()
     }
-    pub fn intersect(&self, r: &Ray) -> Vec<Intersection> {
-        let r2 = transform(r.clone(), self.transform.inverse().unwrap());
+    pub fn intersect(&self, r2: &Ray) -> Vec<Intersection> {
+        // let r2 = transform(r.clone(), self.transform.inverse().unwrap());
         let sphere_to_ray = r2.origin - Tuple::point(0.0, 0.0, 0.0);
         let a = r2.direction.dot(&r2.direction);
         let b = 2.0 * r2.direction.dot(&sphere_to_ray);

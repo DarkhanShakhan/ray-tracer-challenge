@@ -133,7 +133,7 @@ mod hit_tests {
 
     #[test]
     fn test_all_intersections_have_positive_t() {
-        let mut s = Shape::Sphere(Sphere::new());
+        let s = Shape::Sphere(Sphere::new());
         let i1 = Intersection::new(1.0, s.clone());
         let i2 = Intersection::new(2.0, s.clone());
         let xs = intersections(&mut [i2, i1.clone()]);
@@ -175,7 +175,7 @@ pub mod computations {
 
     use crate::features::{rays::Ray, shape::Shape, tuple::Tuple};
 
-    use super::Intersection;
+    use super::{hit, Intersection};
 
     pub struct Computation {
         pub t: f32,
@@ -183,12 +183,37 @@ pub mod computations {
         pub point: Tuple,
         pub eyev: Tuple,
         pub normalv: Tuple,
+        pub reflectv: Tuple,
         pub inside: bool,
         pub over_point: Tuple,
+        pub under_point: Tuple,
+        pub n1: f32,
+        pub n2: f32,
     }
 
     impl Computation {
-        pub fn new(i: &Intersection, r: &Ray) -> Self {
+        pub fn new(i: &Intersection, r: &Ray, xs: &[Intersection]) -> Self {
+            let mut n1 = 1.0;
+            let mut n2 = 1.0;
+            let mut containers: Vec<Shape> = vec![];
+            for x in xs.iter() {
+                if *i == *x {
+                    if let Some(l) = containers.last() {
+                        n1 = l.material().refractive_index;
+                    }
+                }
+                if let Some(index) = containers.iter().position(|a| *a == x.s) {
+                    containers.remove(index);
+                } else {
+                    containers.push(x.s.clone())
+                }
+                if *i == *x {
+                    if let Some(l) = containers.last() {
+                        n2 = l.material().refractive_index;
+                    }
+                    break;
+                }
+            }
             let mut normalv = i.s.normal_at(r.position(i.t));
             let mut inside = false;
             if normalv.dot(&-(r.direction)) < 0.0 {
@@ -201,8 +226,12 @@ pub mod computations {
                 point: r.position(i.t),
                 eyev: -(r.direction),
                 normalv,
+                reflectv: r.direction.reflect(&normalv),
                 inside,
                 over_point: r.position(i.t) + (normalv * 0.0001),
+                under_point: r.position(i.t) - (normalv * 0.0001),
+                n1,
+                n2,
             }
         }
     }
@@ -220,9 +249,9 @@ pub mod computations {
         #[test]
         fn test_prepare_computation() {
             let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-            let mut s = Shape::Sphere(Sphere::new());
+            let s = Shape::Sphere(Sphere::new());
             let i = Intersection::new(4.0, s.clone());
-            let comps = Computation::new(&i, &r);
+            let comps = Computation::new(&i, &r, &[]);
             assert_eq!(comps.t, i.t);
             assert_eq!(comps.object, i.s);
             assert_eq!(comps.point, Tuple::point(0.0, 0.0, -1.0));
@@ -232,17 +261,17 @@ pub mod computations {
         #[test]
         fn test_hit_outside() {
             let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
-            let mut s = Shape::Sphere(Sphere::new());
+            let s = Shape::Sphere(Sphere::new());
             let i = Intersection::new(4.0, s.clone());
-            let comps = Computation::new(&i, &r);
+            let comps = Computation::new(&i, &r, &[]);
             assert!(!comps.inside);
         }
         #[test]
         fn test_hit_inside() {
             let r = Ray::new(Tuple::point(0.0, 0.0, 0.0), Tuple::vector(0.0, 0.0, 1.0));
-            let mut s = Shape::Sphere(Sphere::new());
+            let s = Shape::Sphere(Sphere::new());
             let i = Intersection::new(1.0, s.clone());
-            let comps = Computation::new(&i, &r);
+            let comps = Computation::new(&i, &r, &[]);
             assert_eq!(comps.point, Tuple::point(0.0, 0.0, 1.0));
             assert_eq!(comps.eyev, Tuple::vector(0.0, 0.0, -1.0));
             assert!(comps.inside);
@@ -254,9 +283,90 @@ pub mod computations {
             let mut s = Shape::Sphere(Sphere::new());
             s.set_transform(translation(0.0, 0.0, 1.0));
             let i = Intersection::new(5.0, s.clone());
-            let comps = Computation::new(&i, &r);
+            let comps = Computation::new(&i, &r, &[]);
             assert!(comps.over_point.z < -EPSILON / 2.0);
             assert!(comps.point.z > comps.over_point.z)
         }
+    }
+}
+
+#[cfg(test)]
+mod reflectv_tests {
+    use crate::features::{planes::Plane, rays::Ray, tuple::Tuple};
+
+    use super::{computations::Computation, *};
+    #[test]
+    fn test_precomputing_reflection_vector() {
+        let shape = Shape::Plane(Plane::new());
+        let r = Ray::new(
+            Tuple::point(0.0, 1.0, -1.0),
+            Tuple::vector(0.0, -(2.0_f32.sqrt() / 2.0), 2.0_f32.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2.0_f32.sqrt(), shape);
+        let comps = Computation::new(&i, &r, &[]);
+        assert_eq!(
+            comps.reflectv,
+            Tuple::vector(0.0, 2.0_f32.sqrt() / 2.0, 2.0_f32.sqrt() / 2.0)
+        )
+    }
+}
+
+#[cfg(test)]
+mod reflection_refraction_tests {
+    use std::f32::EPSILON;
+
+    use crate::features::{
+        rays::Ray,
+        spheres::Sphere,
+        transformations::{scaling, translation},
+        tuple::Tuple,
+    };
+
+    use super::{computations::Computation, *};
+    #[test]
+    fn test_n1_n2() {
+        let mut a = Sphere::glass_sphere();
+        a.transform = scaling(2.0, 2.0, 2.0);
+        a.material.refractive_index = 1.5;
+        let mut b = Sphere::glass_sphere();
+        b.transform = translation(0.0, 0.0, -0.25);
+        b.material.refractive_index = 2.0;
+        let mut c = Sphere::glass_sphere();
+        c.transform = translation(0.0, 0.0, 0.25);
+        c.material.refractive_index = 2.5;
+        let r = Ray::new(Tuple::point(0.0, 0.0, -4.0), Tuple::vector(0.0, 0.0, 1.0));
+        let xs = intersections(&mut [
+            Intersection::new(2.0, Shape::Sphere(a.clone())),
+            Intersection::new(2.75, Shape::Sphere(b.clone())),
+            Intersection::new(3.25, Shape::Sphere(c.clone())),
+            Intersection::new(4.75, Shape::Sphere(b.clone())),
+            Intersection::new(5.25, Shape::Sphere(c.clone())),
+            Intersection::new(6.0, Shape::Sphere(a.clone())),
+        ]);
+        let results = [
+            (1.0, 1.5),
+            (1.5, 2.0),
+            (2.0, 2.5),
+            (2.5, 2.5),
+            (2.5, 1.5),
+            (1.5, 1.0),
+        ];
+        for (ix, x) in xs.iter().enumerate() {
+            let comps = Computation::new(x, &r, &xs);
+            assert_eq!(comps.n1, results[ix].0);
+            assert_eq!(comps.n2, results[ix].1);
+        }
+    }
+
+    #[test]
+    fn test_under_point() {
+        let r = Ray::new(Tuple::point(0.0, 0.0, -5.0), Tuple::vector(0.0, 0.0, 1.0));
+        let mut shape = Sphere::glass_sphere();
+        shape.transform = translation(0.0, 0.0, 1.0);
+        let i = Intersection::new(5.0, Shape::Sphere(shape));
+        let xs = intersections(&mut [i.clone()]);
+        let comps = Computation::new(&i, &r, &xs);
+        assert!(comps.under_point.z > 0.0001 / 2.0);
+        assert!(comps.point.z < comps.under_point.z);
     }
 }
