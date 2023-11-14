@@ -68,19 +68,19 @@ impl World {
         color * comps.object.material().reflective
     }
     pub fn refracted_color(&self, comps: &Computation, remaining: u32) -> Tuple {
-        if comps.object.material().transparency == 0.0
-            || remaining == 0
-            || self.is_total_internal_reflection(comps)
-        {
+        if comps.object.material().transparency == 0.0 || remaining == 0 {
             return Tuple::color(0.0, 0.0, 0.0);
         }
-        Tuple::color(1.0, 1.0, 1.0)
-    }
-    fn is_total_internal_reflection(&self, comps: &Computation) -> bool {
         let n_ratio = comps.n1 / comps.n2;
         let cos_i = comps.eyev.dot(&comps.normalv);
         let sin2_t = n_ratio.powi(2) * (1.0 - cos_i.powi(2));
-        sin2_t > 1.0
+        if sin2_t > 1.0 {
+            return Tuple::color(0.0, 0.0, 0.0);
+        }
+        let cos_t = (1.0 - sin2_t).sqrt();
+        let direction = comps.normalv * (n_ratio * cos_i - cos_t) - comps.eyev * n_ratio;
+        let refract_ray = Ray::new(comps.under_point, direction);
+        self.color_at(&refract_ray) * comps.object.material().transparency
     }
 }
 
@@ -321,6 +321,8 @@ mod world_tests {
 
     #[cfg(test)]
     mod refracted_color_tests {
+        use crate::features::patterns::{Checker, Pattern, Stripe};
+
         use super::*;
         #[test]
         fn test_refracted_color_with_opaque_surface() {
@@ -373,6 +375,38 @@ mod world_tests {
             let comps = Computation::new(&xs[1], &r, &xs);
             let c = w.refracted_color(&comps, 5);
             assert_eq!(c, Tuple::color(0.0, 0.0, 0.0))
+        }
+
+        #[test]
+        fn refracted_color_with_refracted_ray() {
+            let mut w = World::default();
+            let mut a = w.shapes[0].clone();
+            let mut m = a.material();
+            m.ambient = 1.0;
+            m.pattern = Some(Pattern::Stripe(default_pattern()));
+            a.set_material(m);
+            let mut b = w.shapes[1].clone();
+            m = b.material();
+            m.transparency = 1.0;
+            m.refractive_index = 1.5;
+            b.set_material(m);
+            w.shapes[0] = a.clone();
+            w.shapes[1] = b.clone();
+            let r = Ray::new(Tuple::point(0.0, 0.0, 0.1), Tuple::vector(0.0, 1.0, 0.0));
+            let xs = intersections(&mut [
+                Intersection::new(-0.9899, a.clone()),
+                Intersection::new(-0.4899, b.clone()),
+                Intersection::new(0.4899, b.clone()),
+                Intersection::new(0.9899, a.clone()),
+            ]);
+            let comps = Computation::new(&xs[1], &r, &xs);
+            let c = w.refracted_color(&comps, 5);
+            assert_eq!(c, Tuple::color(0.0, 0.99888, 0.04725));
+        }
+        fn default_pattern() -> Stripe {
+            let white: Tuple = Tuple::color(1.0, 1.0, 1.0);
+            let black: Tuple = Tuple::color(0.0, 0.0, 0.0);
+            Stripe::new(white, black)
         }
     }
 }

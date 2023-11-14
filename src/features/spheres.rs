@@ -33,15 +33,6 @@ impl Sphere {
     }
 }
 impl Sphere {
-    fn get_material(&self) -> Material {
-        self.material.clone()
-    }
-    fn get_transform(&self) -> Matrice {
-        self.transform.clone()
-    }
-    fn set_material(&mut self, material: Material) {
-        self.material = material;
-    }
     pub fn set_transform(&mut self, transformation: Matrice) {
         self.transform = transformation;
     }

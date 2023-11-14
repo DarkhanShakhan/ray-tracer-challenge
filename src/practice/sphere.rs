@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 
 use crate::features::{
     camera::cameras::Camera,
+    cube::Cube,
     lights::Light,
     materials::Material,
     patterns::{Checker, Gradient, Pattern, Ring, Stripe},
@@ -16,7 +17,7 @@ use crate::features::{
 };
 
 pub fn draw_sphere() {
-    let light_position = Tuple::point(-8.0, 2.0, -28.0);
+    let light_position = Tuple::point(-8.0, 4.0, -8.0);
     let light_color = Tuple::color(1.0, 1.0, 1.0);
     let light = Light::new(light_position, light_color);
 
@@ -69,23 +70,28 @@ pub fn draw_sphere() {
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
 
+    let mut cube = Cube::new();
+    cube.transform = translation(0.0, 2.0, 0.0);
+    cube.material.color = Tuple::color(1.0, 1.0, 1.0);
+    // cube.material.reflective = 0.8;
     let world = World::new(
         light.clone(),
         &[
             Shape::Plane(left_wall),
             Shape::Plane(right_wall),
-            Shape::Plane(ceiling),
+            // Shape::Plane(ceiling),
             Shape::Plane(floor),
-            Shape::Sphere(middle),
-            Shape::Sphere(right),
-            Shape::Sphere(left),
+            // Shape::Sphere(middle),
+            // Shape::Sphere(right),
+            // Shape::Sphere(left),
+            Shape::Cube(cube),
         ],
     );
     let mut camera = Camera::new(800.0, 400.0, PI / 2.0);
     // let mut camera = Camera::new(140.0, 70.0, PI / 2.0);
 
     camera.transform = view_transformation(
-        Tuple::point(0.0, 1.0, -8.0),
+        Tuple::point(-4.0, 5.0, -8.0),
         Tuple::point(0.0, 1.0, 0.0),
         Tuple::vector(0.0, 2.0, 0.0),
     );

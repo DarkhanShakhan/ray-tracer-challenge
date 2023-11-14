@@ -1,4 +1,5 @@
 use super::{
+    cube::Cube,
     intersections::Intersection,
     materials::Material,
     matrice::Matrice,
@@ -12,6 +13,7 @@ use super::{
 pub enum Shape {
     Sphere(Sphere),
     Plane(Plane),
+    Cube(Cube),
 }
 
 impl Shape {
@@ -20,36 +22,42 @@ impl Shape {
         match self {
             Shape::Sphere(s) => s.intersect(&ray),
             Shape::Plane(p) => p.intersect(&ray),
+            Shape::Cube(c) => c.intersect(&ray),
         }
     }
     pub fn set_transform(&mut self, t: Matrice) {
         match self {
             Shape::Sphere(s) => s.set_transform(t),
             Shape::Plane(p) => p.set_transform(t),
+            Shape::Cube(c) => c.transform = t,
         }
     }
     pub fn transform(&self) -> Matrice {
         match self {
             Shape::Sphere(s) => s.transform.clone(),
             Shape::Plane(p) => p.transform(),
+            Shape::Cube(c) => c.transform.clone(),
         }
     }
     pub fn normal_at(&self, point: Tuple) -> Tuple {
         match self {
             Shape::Sphere(s) => s.normal_at(point),
             Shape::Plane(p) => p.normal_at(point),
+            Shape::Cube(c) => c.normal_at(point),
         }
     }
     pub fn material(&self) -> Material {
         match self {
             Shape::Sphere(s) => s.material.clone(),
             Shape::Plane(p) => p.material.clone(),
+            Shape::Cube(c) => c.material.clone(),
         }
     }
     pub fn set_material(&mut self, m: Material) {
         match self {
             Shape::Sphere(s) => s.material = m,
             Shape::Plane(_) => {}
+            Shape::Cube(_) => {}
         }
     }
     pub fn set_material_ambient(&mut self, ambient: f32) {
